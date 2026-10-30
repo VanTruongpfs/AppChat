@@ -1,0 +1,55 @@
+:root {
+  --color-white: #ffffff;
+
+  --color-sky-50: #f0f9ff;
+  --color-sky-100: #e0f2fe;
+  --color-sky-200: #bae6fd;
+  --color-sky-600: #0284c7;
+  --color-sky-700: #0369a1;
+
+  --color-cyan-100: #cffafe;
+  --color-cyan-300: #67e8f9;
+  --color-cyan-500: #06b6d4;
+  --color-cyan-600: #0891b2;
+  --color-cyan-700: #0e7490;
+
+  --color-emerald-500: #10b981;
+
+  --color-slate-400: #94a3b8;
+  --color-slate-500: #64748b;
+  --color-slate-900: #0f172a;
+  --color-gray-500: #6b7280;
+
+  --color-red-50: #fef2f2;
+  --color-red-100: #fee2e2;
+  --color-red-500: #ef4444;
+  --color-red-600: #dc2626;
+
+  /* The four main colors shown in the design system reference. */
+  --color-primary: var(--color-sky-600);
+  --color-secondary: var(--color-cyan-500);
+  --color-tertiary: var(--color-emerald-500);
+  --color-neutral: var(--color-slate-900);
+
+  /* Semantic aliases for components. */
+  --color-primary-hover: var(--color-sky-700);
+  --color-background: var(--color-sky-50);
+  --color-surface: var(--color-white);
+  --color-surface-muted: var(--color-sky-100);
+  --color-border: var(--color-sky-200);
+  --color-text: var(--color-neutral);
+  --color-text-secondary: var(--color-slate-500);
+  --color-text-muted: var(--color-slate-400);
+  --color-text-inverse: var(--color-white);
+  --color-success: var(--color-tertiary);
+  --color-danger: var(--color-red-500);
+  --color-danger-hover: var(--color-red-600);
+  --color-danger-background: var(--color-red-50);
+
+  /*font*/
+  --font-family-base: 'Inter', system-ui, -apple-system, BlinkMacSystemFont,
+    'Segoe UI', sans-serif;
+  --font-family-heading: var(--font-family-base);
+  --font-family-body: var(--font-family-base);
+  --font-family-label: var(--font-family-base);
+}
