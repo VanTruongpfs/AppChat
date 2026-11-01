@@ -6,6 +6,7 @@ import conversationImage from '../../assets/Screenshot 2026-10-30 121448.png'
 import '../../styles/css/HomePage.scss'
 import React from "react"
 import ChatPanel from '../../components/chat/ChatPanel'
+import DetailPanel from '../../components/DetailPanel/DetailPanel'
 import type { MessageData } from '../../components/chat/types'
 const conversations: ConversationData[] = [
     {
@@ -145,7 +146,9 @@ export default function HomePage() {
                         onSendMessage={handleSendMessage}
                     />
                 </section>
-                <section className="details-panel"></section>
+                <section className="details-panel">
+                    <DetailPanel conversation={selectedConversation} />
+                </section>
             </div>
         </>
     )
