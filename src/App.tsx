@@ -1,8 +1,6 @@
 import './App.css'
-import HomePage from './Screens/home/HomePage'
+import AppRoutes from './Route/Route'
 
-function App() {
-  return <HomePage />
+export default function App() {
+    return <AppRoutes />
 }
-
-export default App
