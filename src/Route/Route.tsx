@@ -7,6 +7,10 @@ export default function AppRoutes() {
         <>
             <Routes>
                 <Route
+                    path="/"
+                    element={<Navigate to="/chat" replace/> }
+                    />
+                <Route
                     path="/login"
                     element={<AuthPage mode="login" />}
                 />
@@ -19,6 +23,10 @@ export default function AppRoutes() {
                     path="*"
                     element={<Navigate to="/login" replace />}
                 />
+                <Route
+                    path="*"
+                    element={<Navigate to="/chat" replace/> }
+                    />
             </Routes>
         </>
     )
