@@ -7,6 +7,10 @@ export default function AppRoutes() {
         <>
             <Routes>
                 <Route
+                    path="/"
+                    element={<Navigate to="/login" replace/> }
+                    />
+                <Route
                     path="/login"
                     element={<AuthPage mode="login" />}
                 />
