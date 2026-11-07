@@ -9,9 +9,6 @@ import ChatPanel from '../../components/chat/ChatPanel'
 import DetailPanel from '../../components/DetailPanel/DetailPanel'
 import type { MessageData } from '../../components/chat/types'
 import { getUserList } from '../../services/connectSocket'
-const conversations: ConversationData[] = [
-
-]
 const mockMessages: Record<number, MessageData[]> = {
     1: [
         {
@@ -79,6 +76,8 @@ export default function HomePage() {
         React.useState<Record<number, MessageData[]>>(mockMessages)
     const [isLoading, setIsLoading] = React.useState(true)
     const [error, setError] = React.useState("")
+    const groupCount = conversations.filter(item => item.isGroup).length
+    const personalCount = conversations.filter(item => !item.isGroup).length
     React.useEffect(() => {
         let isMounted = true
         async function fetchConversations() {
@@ -132,7 +131,7 @@ export default function HomePage() {
                 }
             }
         }
-        fetchConversations()
+        void fetchConversations()
         return () => {
             isMounted = false
         }
