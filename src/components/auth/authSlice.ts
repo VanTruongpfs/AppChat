@@ -46,6 +46,12 @@ export const authSlice = createSlice({
                 ...initialState,error:"Kết nối đóng, hãy đăng nhập lại.",
             }
         },
+        clearAuthError(state){
+            state.error = null;
+            if(state.status == "error"){
+                state.status = "idle";
+            }
+        }
     },
 })
-export const {logginStart, logginSuccess, logginFail, sessionLost, registerSuccess} = authSlice.actions;
+export const {logginStart, logginSuccess, logginFail, sessionLost, registerSuccess, clearAuthError} = authSlice.actions;

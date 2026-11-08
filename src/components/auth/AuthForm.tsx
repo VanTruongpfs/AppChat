@@ -1,14 +1,36 @@
 import AuthField from "./AuthField.tsx";
-import type { FormEvent } from "react";
 import { connectChatSocket } from "../../services/connectSocket";
 import { useAppDispatch, useAppSelector } from "../../app/hook";
 import type { AppDispatch } from "../../app/store";
-import { logginStart, logginSuccess, logginFail,registerSuccess } from "./authSlice";
+import {logginStart, logginSuccess, logginFail, registerSuccess, clearAuthError} from "./authSlice";
 import { Navigate } from "react-router";
+import { useState, useEffect, type FormEvent } from "react";
 export type AuthMode = 'login' | 'register';
 type AuthFormProps = {
     mode : AuthMode;
 }
+const passwordRules = [
+    {
+        id: "length",
+        text: "Mật khẩu có ít nhất 6 ký tự",
+        check: (value: string) => value.length >= 6,
+    },
+    {
+        id: "special",
+        text: "Mật khẩu có ít nhất một ký tự đặc biệt",
+        check: (value: string) => /[\p{P}\p{S}]/u.test(value),
+    },
+    {
+        id: "uppercase",
+        text: "Mật khẩu có ít nhất một chữ cái in hoa",
+        check: (value: string) => /[A-Z]/.test(value),
+    },
+    {
+        id: "number",
+        text: "Mật khẩu có ít nhất một ký tự số",
+        check: (value: string) => /[0-9]/.test(value),
+    },
+];
 function handleAuthResponse(event: MessageEvent, user: string, dispatch: AppDispatch) {
     if(typeof event.data !== "string") {
         return;
@@ -65,9 +87,31 @@ async function handleSubmit(event: FormEvent<HTMLFormElement>, isRegister: boole
             ));
             return;
         }
+        if(user.length<6) {
+            dispatch(logginFail(
+                "Tên đăng nhập phải ít nhất 6 ký tự"
+            ));
+            return;
+        }
+        if(password.length<6) {
+            dispatch(logginFail("Mật khẩu chứa ít nhất 6 ký tự"))
+            return;
+        }
+        if(!/[\p{P}\p{S}]/u.test(password)) {
+            dispatch(logginFail("Mật khẩu chứa ít nhất 1 ký tự đặc biệt"))
+            return;
+        }
+        if (!/[A-Z]/u.test(password)) {
+            dispatch(logginFail("Mật khẩu chứa ít nhất 1 ký tự in hoa"))
+            return;
+        }
+        if (!/[0-9]/u.test(password)) {
+            dispatch(logginFail("Mật khẩu chứa ít nhất 1 ký tự số"))
+            return;
+        }
         if(password!==passwordConfirm) {
             dispatch(logginFail("Mật khẩu không trùng khớp."))
-            return
+            return;
         }
     }
     dispatch(logginStart());
@@ -100,12 +144,21 @@ export default function AuthForm({mode}: AuthFormProps) {
     const status = useAppSelector(state => state.auth.status);
     const error = useAppSelector(state => state.auth.error);
     const dispatch = useAppDispatch();
+    const [password, setPassword] = useState("");
+    useEffect(()=>{dispatch(clearAuthError())}, [mode, dispatch]);
     if (status === "authenticated") {
         return <Navigate to="/chat" replace />;
     }
     return (<>
         <form className="auth-form" onSubmit={(event)=>handleSubmit(event, isRegister, dispatch)}>
-            <p>Trạng thái: {status}</p>
+            {isRegister && status === "registered" && (
+                <p className="auth-message auth-message--success" role="status">
+                    Đăng ký thành công
+                </p>
+            )}
+            {error && (
+                <p className="auth-message auth-message--error" role="alert">{error}</p>
+            )}
             <AuthField id="username"
                        label="Tên người dùng"
                        name="username"
@@ -123,17 +176,11 @@ export default function AuthForm({mode}: AuthFormProps) {
                 autoComplete={
                     isRegister ? 'new-password' : 'current-password'
                 }
+                value={password}
+                onChange={(event) => setPassword(event.currentTarget.value)}
+                aria-describedby={isRegister ? "password-rules" : undefined}
                 required
             />
-            {error && (
-                <p className="auth-error" role="alert">{error}</p>
-            )}
-
-            {isRegister && status === "registered" && (
-                <p role="status">
-                    Đăng ký thành công
-                </p>
-            )}
             {isRegister && (
                 <AuthField
                     id="confirm-password"
@@ -144,6 +191,24 @@ export default function AuthForm({mode}: AuthFormProps) {
                     autoComplete="new-password"
                     required
                 />
+            )}
+            {isRegister && (
+                <ul id="password-rules" className="password-rules" aria-live="polite">
+                    {passwordRules.map((rule)=>{
+                        const valid = rule.check(password);
+                        return (
+                            <li key={rule.id}
+                                className={valid?"is-valid":"is-invalid"}
+                                aria-label={`${valid?"Đạt":"Chưa đạt"}:${rule.text}`}
+                            >
+                                <span aria-hidden={true}>
+                                    <i className={valid?"bi-check2":"bi-x"}></i>
+                                    {rule.text}
+                                </span>
+                            </li>
+                        );
+                    })}
+                </ul>
             )}
             <button className="auth-submit" type="submit" disabled={status === "loading"}>
                 {isRegister ? 'Đăng ký tài khoản' : 'Đăng nhập'}
