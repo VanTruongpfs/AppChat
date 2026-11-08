@@ -8,38 +8,7 @@ import React from "react"
 import ChatPanel from '../../components/chat/ChatPanel'
 import DetailPanel from '../../components/DetailPanel/DetailPanel'
 import type { MessageData } from '../../components/chat/types'
-const conversations: ConversationData[] = [
-    {
-        id: 1,
-        name: 'Nguyễn Gia Huy',
-        image: conversationImage,
-        lastMessage: 'Sticker',
-        time: '3 phút',
-        unreadCount: 2,
-        isPriority: true,
-        isGroup: false,
-    },
-    {
-        id: 2,
-        name: 'Lập trình FE',
-        image: conversationImage,
-        lastMessage: 'Bạn: Hay bạn',
-        time: '13 phút',
-        unreadCount: 5,
-        isPriority: true,
-        isGroup: true,
-    },
-    {
-        id: 3,
-        name: 'Vũ Nguyên',
-        image: conversationImage,
-        lastMessage: 'Hay bạn',
-        time: '1 giờ',
-        unreadCount: 0,
-        isPriority: false,
-        isGroup: false,
-    },
-]
+import { getUserList } from '../../services/chatService'
 const mockMessages: Record<number, MessageData[]> = {
     1: [
         {
@@ -98,10 +67,74 @@ const mockMessages: Record<number, MessageData[]> = {
     ],
 }
 export default function HomePage() {
+    const [conversations, setConversations] =
+        React.useState<ConversationData[]>([])
     const [selectedConversation, setSelectedConversation] =
-        React.useState<ConversationData | null>(conversations[0])
+        React.useState<ConversationData | null>(null)
     const [messagesByConversation, setMessagesByConversation] =
         React.useState<Record<number, MessageData[]>>(mockMessages)
+    const [isLoading, setIsLoading] = React.useState(true)
+    const [error, setError] = React.useState("")
+    const groupCount = conversations.filter(item => item.isGroup).length
+    const personalCount = conversations.filter(item => !item.isGroup).length
+    React.useEffect(() => {
+        let isMounted = true
+        async function fetchConversations() {
+            try {
+                setIsLoading(true)
+                setError("")
+                const userList = await getUserList()
+                const formattedConversations: ConversationData[] =
+                    userList.map((item, index) => {
+                        const actionDate = new Date(
+                            item.actionTime.replace(" ", "T")
+                        )
+                        const formattedTime = isNaN(actionDate.getTime())
+                            ? item.actionTime
+                            : actionDate.toLocaleString("vi-VN", {
+                                day: "2-digit",
+                                month: "2-digit",
+                                hour: "2-digit",
+                                minute: "2-digit",
+                            })
+                        return {
+                            id: index + 1,
+                            name: item.name,
+                            image: conversationImage,
+                            lastMessage: item.type === 1
+                                ? "Phòng chat"
+                                : "Cuộc trò chuyện",
+                            time: formattedTime,
+                            unreadCount: 0,
+                            isPriority: false,
+                            isGroup: item.type === 1,
+                        }
+                    })
+                if (isMounted) {
+                    setConversations(formattedConversations)
+                    setSelectedConversation(
+                        formattedConversations[0] ?? null
+                    )
+                }
+            } catch (err) {
+                if (isMounted) {
+                    setError(
+                        err instanceof Error
+                            ? err.message
+                            : "Không thể tải danh sách hội thoại."
+                    )
+                }
+            } finally {
+                if (isMounted) {
+                    setIsLoading(false)
+                }
+            }
+        }
+        void fetchConversations()
+        return () => {
+            isMounted = false
+        }
+    }, [])
     const currentMessages = selectedConversation
         ? messagesByConversation[selectedConversation.id] || []
         : []
@@ -132,11 +165,24 @@ export default function HomePage() {
                 <section className="conversation-sidebar">
                     <HeaderConversationList />
                     <div className="conversation-croll">
-                        <ConversationList
-                            conversations={conversations}
-                            selectedId={selectedConversation?.id ?? null}
-                            onSelect={setSelectedConversation}
-                        />
+                        {isLoading && (
+                            <p>Đang tải danh sách hội thoại...</p>
+                        )}
+                        {error && (
+                            <p className="conversation-error">
+                                {error}
+                            </p>
+                        )}
+                        {!isLoading && !error && conversations.length === 0 && (
+                            <p>Chưa có cuộc trò chuyện nào.</p>
+                        )}
+                        {!isLoading && !error && (
+                            <ConversationList
+                                conversations={conversations}
+                                selectedId={selectedConversation?.id ?? null}
+                                onSelect={setSelectedConversation}
+                            />
+                        )}
                     </div>
                 </section>
                 <section className="chat-panel">

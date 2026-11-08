@@ -52,4 +52,3 @@ export function connectChatSocket(): Promise<WebSocket> {
     })
     return connecting
 }
-
