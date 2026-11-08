@@ -8,7 +8,7 @@ type LogginSession ={
 type AuthState = {
     user: string | null;
     reloginCode: string | null;
-    status: "idle" | "loading" | "authenticated" |"error";
+    status: "idle" | "loading" | "authenticated" | "registered" | "error";
     error: string | null;
 }
 const initialState: AuthState = {
@@ -37,6 +37,10 @@ export const authSlice = createSlice({
             state.status = "error";
             state.error = action.payload;
         },
+        registerSuccess(state){
+            state.status = "registered";
+            state.error = null;
+        },
         sessionLost(){
             return {
                 ...initialState,error:"Kết nối đóng, hãy đăng nhập lại.",
@@ -44,4 +48,4 @@ export const authSlice = createSlice({
         },
     },
 })
-export const {logginStart, logginSuccess, logginFail, sessionLost} = authSlice.actions;
+export const {logginStart, logginSuccess, logginFail, sessionLost, registerSuccess} = authSlice.actions;
