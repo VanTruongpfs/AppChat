@@ -8,7 +8,7 @@ import React from "react"
 import ChatPanel from '../../components/chat/ChatPanel'
 import DetailPanel from '../../components/DetailPanel/DetailPanel'
 import type { MessageData } from '../../components/chat/types'
-import { getUserList } from '../../services/connectSocket'
+import { getUserList } from '../../services/chatService'
 const mockMessages: Record<number, MessageData[]> = {
     1: [
         {
@@ -66,7 +66,6 @@ const mockMessages: Record<number, MessageData[]> = {
         },
     ],
 }
-
 export default function HomePage() {
     const [conversations, setConversations] =
         React.useState<ConversationData[]>([])
