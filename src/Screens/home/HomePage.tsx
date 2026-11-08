@@ -75,8 +75,8 @@ export default function HomePage() {
         React.useState<Record<number, MessageData[]>>(mockMessages)
     const [isLoading, setIsLoading] = React.useState(true)
     const [error, setError] = React.useState("")
-    const groupCount = conversations.filter(item => item.isGroup).length
-    const personalCount = conversations.filter(item => !item.isGroup).length
+    // const groupCount = conversations.filter(item => item.isGroup).length
+    // const personalCount = conversations.filter(item => !item.isGroup).length
     React.useEffect(() => {
         let isMounted = true
         async function fetchConversations() {
