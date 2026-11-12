@@ -11,6 +11,7 @@ import type { MessageData } from '../../components/chat/types'
 import { getUserList, getChatMessages } from '../../services/chatService'
 import { useAppDispatch, useAppSelector } from '../../app/hook'
 import { setError, setMessages, setHasMore, setLoading, setPage, appendMessages, prependMessages } from '../../components/chat/ChatSlice'
+import CreateRoomModal from '../../components/popupCreateGroup/CreateRoomModal'
 
 export default function HomePage() {
     const dispatch = useAppDispatch()
@@ -29,6 +30,8 @@ export default function HomePage() {
     const [isLoadingConversations, setIsLoadingConversations] =
         React.useState(true)
     const [conversationsError, setConversationsError] = React.useState("")
+    const [showCreateRoom, setShowCreateRoom] = React.useState(false)
+
     // const groupCount = conversations.filter(item => item.isGroup).length
     // const personalCount = conversations.filter(item => !item.isGroup).length
     React.useEffect(() => {
@@ -180,7 +183,9 @@ export default function HomePage() {
         <>
             <div className="home-page">
                 <section className="conversation-sidebar">
-                    <HeaderConversationList />
+                    <HeaderConversationList
+                        onCreateRoom={() => setShowCreateRoom(true)}
+                    />
                     <div className="conversation-croll">
                         {isLoadingConversations && (
                             <p>Đang tải danh sách hội thoại...</p>
@@ -217,6 +222,20 @@ export default function HomePage() {
                     <DetailPanel conversation={selectedConversation} />
                 </section>
             </div>
+            {showCreateRoom && (
+                <CreateRoomModal
+                    friends={conversations
+                        .filter(item => !item.isGroup)
+                        .map(item => ({
+                            name: item.name,
+                            image: item.image,
+                        }))}
+                    onClose={() => setShowCreateRoom(false)}
+                    onConfirm={data => {
+                        console.log("Dữ liệu tạo nhóm:", data)
+                    }}
+                />
+            )}
         </>
     )
 }
