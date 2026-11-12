@@ -8,67 +8,9 @@ import React from "react"
 import ChatPanel from '../../components/chat/ChatPanel'
 import DetailPanel from '../../components/DetailPanel/DetailPanel'
 import type { MessageData } from '../../components/chat/types'
-import { getUserList } from '../../services/chatService'
-import { connectChatSocket } from '../../services/connectSocket'
+import { getUserList, getChatMessages } from '../../services/chatService'
 import { useAppDispatch, useAppSelector } from '../../app/hook'
 import { setError, setMessages, setHasMore, setLoading, setPage, appendMessages, prependMessages } from '../../components/chat/ChatSlice'
-
-async function fetchRoomMessages(name: string, page: number, authUser: string | null): Promise<{ messages: any[]; hasMore: boolean }> {
-    const ws = await connectChatSocket()
-    return new Promise((resolve, reject) => {
-        const timer = window.setTimeout(() => {
-            cleanup()
-            reject(new Error("Server không phản hồi CHAT_PEOPLE_GET_MES."))
-        }, 10000)
-        function cleanup() {
-            window.clearTimeout(timer)
-            ws.removeEventListener("message", handleMessage)
-            ws.removeEventListener("close", handleClose)
-            ws.removeEventListener("error", handleError)
-        }
-        function handleMessage(event: MessageEvent) {
-            let response: any
-            try { response = JSON.parse(event.data) } catch { return }
-            if (response.status === "error") {
-                cleanup()
-                reject(new Error(response.mes || "Phòng không tồn tại hoặc bạn không trong phòng."))
-                return
-            }
-            if (response.event !== "CHAT_PEOPLE_GET_MES") return
-            cleanup()
-            const data = response.data
-            let serverMessages: any[] = []
-            if (Array.isArray(data)) {
-                serverMessages = data
-            } else if (data && Array.isArray(data.chatMess)) {
-                serverMessages = data.chatMess
-            } else {
-                cleanup()
-                reject(new Error("Định dạng phản hồi không hợp lệ."))
-                return
-            }
-            const messages = serverMessages
-                .map((m) => ({
-                    id: m.id,
-                    text: m.mes,
-                    time: m.createdAt ? new Date(m.createdAt.replace(" ", "T")).toLocaleTimeString("vi-VN", { hour: "2-digit", minute: "2-digit" }) : "",
-                    isMine: m.name === authUser,
-                    type: "text" as const,
-                }))
-                .sort((a, b) => a.id - b.id)
-            resolve({ messages, hasMore: serverMessages.length === 50 })
-        }
-        function handleClose() { cleanup(); reject(new Error("WebSocket đã bị đóng.")) }
-        function handleError() { cleanup(); reject(new Error("Lỗi kết nối WebSocket.")) }
-        ws.addEventListener("message", handleMessage)
-        ws.addEventListener("close", handleClose)
-        ws.addEventListener("error", handleError)
-        ws.send(JSON.stringify({
-            action: "onchat",
-            data: { event: "CHAT_PEOPLE_GET_MES", data: { name, page } }
-        }))
-    })
-}
 
 export default function HomePage() {
     const dispatch = useAppDispatch()
@@ -158,9 +100,18 @@ export default function HomePage() {
         async function loadHistory() {
             if (!selectedConversation) return
             try {
-                const result = await fetchRoomMessages(selectedConversation.name, 1, authUser)
+                const result = await getChatMessages(selectedConversation.name, 1)
                 if (isMounted) {
-                    dispatch(setMessages({ conversationId: id, messages: result.messages }))
+                    const messages: MessageData[] = result.messages
+                        .map((m) => ({
+                            id: m.id,
+                            text: m.mes,
+                            time: m.createdAt ? new Date(m.createdAt.replace(" ", "T")).toLocaleTimeString("vi-VN", { hour: "2-digit", minute: "2-digit" }) : "",
+                            isMine: m.name === authUser,
+                            type: "text" as const,
+                        }))
+                        .sort((a, b) => a.id - b.id)
+                    dispatch(setMessages({ conversationId: id, messages }))
                     dispatch(setHasMore({ conversationId: id, hasMore: result.hasMore }))
                     dispatch(setLoading({ conversationId: id, loading: false }))
                 }
@@ -204,9 +155,18 @@ export default function HomePage() {
 
         dispatch(setLoading({ conversationId, loading: true }))
         try {
-            const result = await fetchRoomMessages(selectedConversation.name, currentPage + 1, authUser)
-            if (result.messages.length > 0) {
-                dispatch(prependMessages({ conversationId, messages: result.messages }))
+            const result = await getChatMessages(selectedConversation.name, currentPage + 1)
+            const messages: MessageData[] = result.messages
+                .map((m) => ({
+                    id: m.id,
+                    text: m.mes,
+                    time: m.createdAt ? new Date(m.createdAt.replace(" ", "T")).toLocaleTimeString("vi-VN", { hour: "2-digit", minute: "2-digit" }) : "",
+                    isMine: m.name === authUser,
+                    type: "text" as const,
+                }))
+                .sort((a, b) => a.id - b.id)
+            if (messages.length > 0) {
+                dispatch(prependMessages({ conversationId, messages }))
                 dispatch(setPage({ conversationId, page: currentPage + 1 }))
             }
             dispatch(setHasMore({ conversationId, hasMore: result.hasMore }))
