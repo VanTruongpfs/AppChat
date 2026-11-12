@@ -67,6 +67,13 @@ export const chatSlice = createSlice({
             state.errorByConversation = {};
             state.membersByConversation = {};
         },
+        appendMessages(state, action: PayloadAction<{ conversationId: number; messages: MessageData[] }>) {
+            const { conversationId, messages } = action.payload;
+            state.messagesByConversation[conversationId] = [
+                ...(state.messagesByConversation[conversationId] ?? []),
+                ...messages,
+            ];
+        },
     },
 });
 
@@ -78,6 +85,7 @@ export const {
     setLoading,
     setError,
     setMembers,
+    appendMessages,
     clearConversation,
     clearAllChat,
 } = chatSlice.actions;

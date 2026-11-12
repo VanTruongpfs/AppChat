@@ -7,11 +7,19 @@ type ChatPanelProps = {
     conversation: ConversationData | null
     messages: MessageData[]
     onSendMessage: (text: string) => void
+    onLoadMore?: () => void
+    isLoadingMore?: boolean
+    hasMore?: boolean
+    error?: string
 }
 export default function ChatPanel({
                                       conversation,
                                       messages,
-                                      onSendMessage
+                                      onSendMessage,
+                                      onLoadMore,
+                                      isLoadingMore,
+                                      hasMore,
+                                      error,
                                   }: ChatPanelProps) {
     if (!conversation) {
         return (
@@ -26,11 +34,18 @@ export default function ChatPanel({
     }
     return (
         <div className="chat-panel__content">
+            {error && (
+                <div className="chat-error">{error}</div>
+            )}
             <ChatHeader conversation={conversation} />
             <MessageList
                 messages={messages}
                 avatar={conversation.image}
-                senderName={conversation.name}/>
+                senderName={conversation.name}
+                onLoadMore={onLoadMore}
+                isLoadingMore={isLoadingMore}
+                hasMore={hasMore}
+            />
             <MessageInput onSend={onSendMessage} />
         </div>
     )

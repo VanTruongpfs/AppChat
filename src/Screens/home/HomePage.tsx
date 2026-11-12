@@ -9,80 +9,92 @@ import ChatPanel from '../../components/chat/ChatPanel'
 import DetailPanel from '../../components/DetailPanel/DetailPanel'
 import type { MessageData } from '../../components/chat/types'
 import { getUserList } from '../../services/chatService'
-const mockMessages: Record<number, MessageData[]> = {
-    1: [
-        {
-            id: 1,
-            text: 'Con vợ làm gì đấy?',
-            time: '15:30',
-            isMine: false,
-            type: 'text',
-        },
-        {
-            id: 2,
-            text: 'Đang vibe giao diện bạn ơi.',
-            time: '15:31',
-            isMine: true,
-            type: 'text',
-        },
-        {
-            id: 3,
-            text: 'Tới đâu rồi ní?',
-            time: '15:32',
-            isMine: false,
-            type: 'text',
-        },
-        {
-            id: 4,
-            text: 'T đang làm phần Chat Panel nè.',
-            time: '15:33',
-            isMine: true,
-            type: 'text',
-        },
-    ],
-    2: [
-        {
-            id: 1,
-            text: 'Làm xong chưa ae?',
-            time: '14:20',
-            isMine: false,
-            type: 'text',
-        },
-        {
-            id: 2,
-            text: 'Chưa m ơi bận nhắn với Thuỷ Linh rồi.',
-            time: '14:25',
-            isMine: true,
-            type: 'text',
-        },
-    ],
-    3: [
-        {
-            id: 1,
-            text: 'Hay bạn.',
-            time: '14:00',
-            isMine: false,
-            type: 'text',
-        },
-    ],
+import { connectChatSocket } from '../../services/connectSocket'
+import { useAppDispatch, useAppSelector } from '../../app/hook'
+import { setError, setMessages, setHasMore, setLoading, setPage, appendMessages, prependMessages } from '../../components/chat/ChatSlice'
+
+async function fetchRoomMessages(name: string, page: number, authUser: string | null): Promise<{ messages: any[]; hasMore: boolean }> {
+    const ws = await connectChatSocket()
+    return new Promise((resolve, reject) => {
+        const timer = window.setTimeout(() => {
+            cleanup()
+            reject(new Error("Server không phản hồi CHAT_PEOPLE_GET_MES."))
+        }, 10000)
+        function cleanup() {
+            window.clearTimeout(timer)
+            ws.removeEventListener("message", handleMessage)
+            ws.removeEventListener("close", handleClose)
+            ws.removeEventListener("error", handleError)
+        }
+        function handleMessage(event: MessageEvent) {
+            let response: any
+            try { response = JSON.parse(event.data) } catch { return }
+            if (response.status === "error") {
+                cleanup()
+                reject(new Error(response.mes || "Phòng không tồn tại hoặc bạn không trong phòng."))
+                return
+            }
+            if (response.event !== "CHAT_PEOPLE_GET_MES") return
+            cleanup()
+            const data = response.data
+            let serverMessages: any[] = []
+            if (Array.isArray(data)) {
+                serverMessages = data
+            } else if (data && Array.isArray(data.chatMess)) {
+                serverMessages = data.chatMess
+            } else {
+                cleanup()
+                reject(new Error("Định dạng phản hồi không hợp lệ."))
+                return
+            }
+            const messages = serverMessages
+                .map((m) => ({
+                    id: m.id,
+                    text: m.mes,
+                    time: m.createdAt ? new Date(m.createdAt.replace(" ", "T")).toLocaleTimeString("vi-VN", { hour: "2-digit", minute: "2-digit" }) : "",
+                    isMine: m.name === authUser,
+                    type: "text" as const,
+                }))
+                .sort((a, b) => a.id - b.id)
+            resolve({ messages, hasMore: serverMessages.length === 50 })
+        }
+        function handleClose() { cleanup(); reject(new Error("WebSocket đã bị đóng.")) }
+        function handleError() { cleanup(); reject(new Error("Lỗi kết nối WebSocket.")) }
+        ws.addEventListener("message", handleMessage)
+        ws.addEventListener("close", handleClose)
+        ws.addEventListener("error", handleError)
+        ws.send(JSON.stringify({
+            action: "onchat",
+            data: { event: "CHAT_PEOPLE_GET_MES", data: { name, page } }
+        }))
+    })
 }
+
 export default function HomePage() {
+    const dispatch = useAppDispatch()
+    const authUser = useAppSelector(state => state.auth.user)
+    const {
+        messagesByConversation,
+        pageByConversation,
+        hasMoreByConversation,
+        loadingByConversation,
+        errorByConversation,
+    } = useAppSelector(state => state.chat)
     const [conversations, setConversations] =
         React.useState<ConversationData[]>([])
     const [selectedConversation, setSelectedConversation] =
         React.useState<ConversationData | null>(null)
-    const [messagesByConversation, setMessagesByConversation] =
-        React.useState<Record<number, MessageData[]>>(mockMessages)
-    const [isLoading, setIsLoading] = React.useState(true)
-    const [error, setError] = React.useState("")
+    const [isLoadingConversations, setIsLoadingConversations] =
+        React.useState(true)
+    const [conversationsError, setConversationsError] = React.useState("")
     // const groupCount = conversations.filter(item => item.isGroup).length
     // const personalCount = conversations.filter(item => !item.isGroup).length
     React.useEffect(() => {
         let isMounted = true
         async function fetchConversations() {
             try {
-                setIsLoading(true)
-                setError("")
+                setIsLoadingConversations(true)
+                setConversationsError("")
                 const userList = await getUserList()
                 const formattedConversations: ConversationData[] =
                     userList.map((item, index) => {
@@ -118,7 +130,7 @@ export default function HomePage() {
                 }
             } catch (err) {
                 if (isMounted) {
-                    setError(
+                    setConversationsError(
                         err instanceof Error
                             ? err.message
                             : "Không thể tải danh sách hội thoại."
@@ -126,7 +138,7 @@ export default function HomePage() {
                 }
             } finally {
                 if (isMounted) {
-                    setIsLoading(false)
+                    setIsLoadingConversations(false)
                 }
             }
         }
@@ -135,29 +147,74 @@ export default function HomePage() {
             isMounted = false
         }
     }, [])
+    React.useEffect(() => {
+        if (!selectedConversation) return
+        let isMounted = true
+        const id = selectedConversation.id
+        dispatch(setError({ conversationId: id, error: "" }))
+        dispatch(setLoading({ conversationId: id, loading: true }))
+        dispatch(setPage({ conversationId: id, page: 1 }))
+
+        async function loadHistory() {
+            if (!selectedConversation) return
+            try {
+                const result = await fetchRoomMessages(selectedConversation.name, 1, authUser)
+                if (isMounted) {
+                    dispatch(setMessages({ conversationId: id, messages: result.messages }))
+                    dispatch(setHasMore({ conversationId: id, hasMore: result.hasMore }))
+                    dispatch(setLoading({ conversationId: id, loading: false }))
+                }
+            } catch (err) {
+                if (isMounted) {
+                    dispatch(setError({ conversationId: id, error: err instanceof Error ? err.message : "Không tải được tin nhắn." }))
+                    dispatch(setLoading({ conversationId: id, loading: false }))
+                }
+            }
+        }
+        void loadHistory()
+        return () => {
+            isMounted = false
+        }
+    }, [selectedConversation, authUser, dispatch])
     const currentMessages = selectedConversation
         ? messagesByConversation[selectedConversation.id] || []
         : []
+    const currentError = selectedConversation ? errorByConversation[selectedConversation.id] : ""
+    const currentLoading = selectedConversation ? loadingByConversation[selectedConversation.id] : false
+    const currentHasMore = selectedConversation ? hasMoreByConversation[selectedConversation.id] : false
+
     const handleSendMessage = (text: string) => {
         if (!selectedConversation) return
         const conversationId = selectedConversation.id
         const newMessage: MessageData = {
             id: Date.now(),
-            text: text,
-            time: new Date().toLocaleTimeString('vi-VN', {
-                hour: '2-digit',
-                minute: '2-digit',
-            }),
+            text,
+            time: new Date().toLocaleTimeString('vi-VN', { hour: '2-digit', minute: '2-digit' }),
             isMine: true,
             type: 'text',
         }
-        setMessagesByConversation(previous => ({
-            ...previous,
-            [conversationId]: [
-                ...(previous[conversationId] || []),
-                newMessage,
-            ],
-        }))
+        dispatch(appendMessages({ conversationId, messages: [newMessage] }))
+    }
+
+    const handleLoadMore = async () => {
+        if (!selectedConversation) return
+        const conversationId = selectedConversation.id
+        const currentPage = pageByConversation[conversationId] ?? 1
+        if (!currentHasMore || currentLoading) return
+
+        dispatch(setLoading({ conversationId, loading: true }))
+        try {
+            const result = await fetchRoomMessages(selectedConversation.name, currentPage + 1, authUser)
+            if (result.messages.length > 0) {
+                dispatch(prependMessages({ conversationId, messages: result.messages }))
+                dispatch(setPage({ conversationId, page: currentPage + 1 }))
+            }
+            dispatch(setHasMore({ conversationId, hasMore: result.hasMore }))
+            dispatch(setLoading({ conversationId, loading: false }))
+        } catch (err) {
+            dispatch(setLoading({ conversationId, loading: false }))
+            dispatch(setError({ conversationId, error: err instanceof Error ? err.message : "Lỗi tải thêm tin nhắn." }))
+        }
     }
     return (
         <>
@@ -165,18 +222,18 @@ export default function HomePage() {
                 <section className="conversation-sidebar">
                     <HeaderConversationList />
                     <div className="conversation-croll">
-                        {isLoading && (
+                        {isLoadingConversations && (
                             <p>Đang tải danh sách hội thoại...</p>
                         )}
-                        {error && (
+                        {conversationsError && (
                             <p className="conversation-error">
-                                {error}
+                                {conversationsError}
                             </p>
                         )}
-                        {!isLoading && !error && conversations.length === 0 && (
+                        {!isLoadingConversations && !conversationsError && conversations.length === 0 && (
                             <p>Chưa có cuộc trò chuyện nào.</p>
                         )}
-                        {!isLoading && !error && (
+                        {!isLoadingConversations && !conversationsError && (
                             <ConversationList
                                 conversations={conversations}
                                 selectedId={selectedConversation?.id ?? null}
@@ -190,6 +247,10 @@ export default function HomePage() {
                         conversation={selectedConversation}
                         messages={currentMessages}
                         onSendMessage={handleSendMessage}
+                        onLoadMore={handleLoadMore}
+                        isLoadingMore={currentLoading}
+                        hasMore={currentHasMore}
+                        error={currentError}
                     />
                 </section>
                 <section className="details-panel">
