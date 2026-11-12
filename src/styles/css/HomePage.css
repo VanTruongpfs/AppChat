@@ -88,6 +88,9 @@
   color: var(--color-primary);
   font-size: 18px;
   font-style: normal;
+  background-color: white;
+  border: none;
+  cursor: pointer;
 }
 .home-page .conversation-list-header > div:last-child {
   display: flex;
@@ -768,6 +771,104 @@
   .home-page .message-input-area {
     padding: 10px;
   }
+}
+.create-room-modal {
+  box-sizing: border-box;
+  width: min(440px, 100vw - 32px);
+  max-height: calc(100dvh - 48px);
+  padding: 24px;
+  overflow-y: auto;
+  border: none;
+  border-radius: 16px;
+  background: white;
+  color: var(--color-text);
+  color-scheme: light;
+  font-family: var(--font-family-body);
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.2);
+}
+.create-room-modal::backdrop {
+  background: rgba(0, 0, 0, 0.4);
+}
+
+.create-room-form {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+.create-room-form h2,
+.create-room-form p {
+  margin: 0;
+}
+.create-room-form h2 {
+  font-size: 20px;
+  color: inherit;
+}
+.create-room-form label {
+  display: grid;
+  gap: 8px;
+}
+.create-room-form input,
+.create-room-form button {
+  font: inherit;
+}
+.create-room-form input[type=text],
+.create-room-form input[type=search] {
+  box-sizing: border-box;
+  width: 100%;
+  padding: 10px 12px;
+  border: 1px solid var(--color-border);
+  border-radius: 8px;
+}
+.create-room-form footer {
+  display: flex;
+  justify-content: flex-end;
+  gap: 8px;
+}
+.create-room-form footer button {
+  padding: 10px 16px;
+  border: 1px solid var(--color-border);
+  border-radius: 8px;
+  background: white;
+  cursor: pointer;
+}
+.create-room-form footer button[type=submit] {
+  background: var(--color-primary);
+  color: white;
+}
+.create-room-form footer button:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.create-room-avatar {
+  width: 80px;
+  height: 80px;
+  border-radius: 50%;
+  object-fit: cover;
+  align-self: center;
+}
+
+.create-room-friends {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  max-height: 220px;
+  overflow-y: auto;
+}
+.create-room-friends .friend-option {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 10px;
+  border: 1px solid var(--color-border);
+  border-radius: 8px;
+  cursor: pointer;
+}
+.create-room-friends img {
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  object-fit: cover;
 }
 
 /*# sourceMappingURL=HomePage.css.map */
