@@ -11,6 +11,8 @@ type ChatPanelProps = {
     isLoadingMore?: boolean
     hasMore?: boolean
     error?: string
+    isOnline: boolean | null
+    isCheckingOnline: boolean | null
 }
 export default function ChatPanel({
                                       conversation,
@@ -20,6 +22,8 @@ export default function ChatPanel({
                                       isLoadingMore,
                                       hasMore,
                                       error,
+                                      isOnline,
+                                      isCheckingOnline,
                                   }: ChatPanelProps) {
     if (!conversation) {
         return (
@@ -37,7 +41,11 @@ export default function ChatPanel({
             {error && (
                 <div className="chat-error">{error}</div>
             )}
-            <ChatHeader conversation={conversation} />
+            <ChatHeader
+                conversation={conversation}
+                isOnline={isOnline}
+                isCheckingOnline={isCheckingOnline}
+            />
             <MessageList
                 messages={messages}
                 avatar={conversation.image}
