@@ -109,7 +109,7 @@ export default function HomePage() {
                         .map((m) => ({
                             id: m.id,
                             text: m.mes,
-                            time: m.createdAt ? new Date(m.createdAt.replace(" ", "T")).toLocaleTimeString("vi-VN", { hour: "2-digit", minute: "2-digit" }) : "",
+                            time: m.createAt ? new Date(m.createAt.replace(" ", "T")).toLocaleTimeString("vi-VN", { hour: "2-digit", minute: "2-digit" }) : "",
                             isMine: m.name === authUser,
                             type: "text" as const,
                         }))
@@ -163,7 +163,7 @@ export default function HomePage() {
                 .map((m) => ({
                     id: m.id,
                     text: m.mes,
-                    time: m.createdAt ? new Date(m.createdAt.replace(" ", "T")).toLocaleTimeString("vi-VN", { hour: "2-digit", minute: "2-digit" }) : "",
+                    time: m.createAt ? new Date(m.createAt.replace(" ", "T")).toLocaleTimeString("vi-VN", { hour: "2-digit", minute: "2-digit" }) : "",
                     isMine: m.name === authUser,
                     type: "text" as const,
                 }))

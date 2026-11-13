@@ -15,8 +15,8 @@ export interface ServerMessage {
     name: string
     to: string
     mes: string
-    createdAt: string
-    type: ChatKind
+    createAt: string
+    type: 0 | 1
 }
 
 export interface RoomMember {
