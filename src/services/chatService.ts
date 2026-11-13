@@ -138,7 +138,7 @@ export async function getChatMessages(name: string, page:number): Promise<LoadMe
 }
 type CheckUserOnlineResponse = {
     status: "success" | "error"
-    event: "CHECK_USER_ONLINE" | "AUTH"
+    event: "CHECK_USER_ONLINE" | "AUTH" |"ACTION_NOT_EXIT"
     data?: {
         status: boolean
     }
@@ -167,6 +167,11 @@ export async function checkUserOnline(user: string): Promise<boolean> {
             if (response.event === "AUTH") {
                 cleanup()
                 reject(new Error(response.mes || "Bạn chưa đăng nhập!"))
+                return
+            }
+            if (response.event === "ACTION_NOT_EXIT") {
+                cleanup()
+                reject(new Error("Server không hỗ trợ CHAT_CHECK_USER_ONLINE."))
                 return
             }
             if (response.event !== "CHECK_USER_ONLINE") {
