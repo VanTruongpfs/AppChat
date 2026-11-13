@@ -1,8 +1,32 @@
+
 import type { ConversationData } from '../conversations/Conversation'
 type ChatHeaderProps = {
     conversation: ConversationData
+    isOnline: boolean | null
+    isCheckingOnline: boolean
 }
-export default function ChatHeader({ conversation }: ChatHeaderProps) {
+export default function ChatHeader({
+                                       conversation,
+                                       isOnline,
+                                       isCheckingOnline,
+                                   }: ChatHeaderProps) {
+    const statusText = conversation.isGroup
+        ? "Phòng chat nhóm"
+        : isCheckingOnline
+            ? "Đang kiểm tra..."
+            : isOnline === null
+                ? "Không xác định"
+                : isOnline
+                    ? "Đang hoạt động"
+                    : "Không hoạt động"
+    const statusClass = isCheckingOnline
+        ? "is-checking"
+        : isOnline === true
+            ? "is-online"
+            : isOnline === false
+                ? "is-offline"
+                : "is-unknown"
+
     return (
         <header className="chat-header">
             <div className="chat-header__user">
@@ -11,11 +35,15 @@ export default function ChatHeader({ conversation }: ChatHeaderProps) {
                         src={conversation.image}
                         alt={conversation.name}
                     />
-                    <span className="chat-header__online-dot" />
+                    {!conversation.isGroup && (
+                        <span
+                            className={`chat-header__online-dot ${statusClass}`}
+                        />
+                    )}
                 </div>
                 <div className="chat-header__identity">
                     <h2>{conversation.name}</h2>
-                    <span>Đang hoạt động</span>
+                    <span>{statusText}</span>
                 </div>
             </div>
             <div className="chat-header__actions">

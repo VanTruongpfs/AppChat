@@ -63,7 +63,6 @@ export async function getUserList(): Promise<ChatUserItem[]> {
         }));
     });
 }
-
 export async function getChatMessages(name: string, page:number): Promise<LoadMessagesResult> {
     const ws = await connectChatSocket();
     return new Promise((resolve, reject) => {
@@ -136,4 +135,69 @@ export async function getChatMessages(name: string, page:number): Promise<LoadMe
             }
         }));
     });
+}
+type CheckUserOnlineResponse = {
+    status: "success" | "error"
+    event: "CHECK_USER_ONLINE" | "AUTH"
+    data?: {
+        status: boolean
+    }
+    mes?: string
+}
+export async function checkUserOnline(user: string): Promise<boolean> {
+    const ws = await connectChatSocket()
+    return new Promise((resolve, reject) => {
+        const timer = window.setTimeout(() => {
+            cleanup()
+            reject(new Error("Server không phản hồi CHECK_USER_ONLINE."))
+        }, 10000)
+        function cleanup() {
+            window.clearTimeout(timer)
+            ws.removeEventListener("message", handleMessage)
+            ws.removeEventListener("close", handleClose)
+            ws.removeEventListener("error", handleError)
+        }
+        function handleMessage(message: MessageEvent) {
+            let response: CheckUserOnlineResponse
+            try {
+                response = JSON.parse(message.data)
+            } catch {
+                return
+            }
+            if (response.event === "AUTH") {
+                cleanup()
+                reject(new Error(response.mes || "Bạn chưa đăng nhập!"))
+                return
+            }
+            if (response.event !== "CHECK_USER_ONLINE") {
+                return
+            }
+            cleanup()
+            if (response.status === "success" && response.data) {
+                resolve(response.data.status)
+            } else {
+                reject(new Error(
+                    response.mes || "Không kiểm tra được trạng thái người dùng."
+                ))
+            }
+        }
+        function handleClose() {
+            cleanup()
+            reject(new Error("WebSocket đã bị đóng."))
+        }
+        function handleError() {
+            cleanup()
+            reject(new Error("Lỗi kết nối WebSocket."))
+        }
+        ws.addEventListener("message", handleMessage)
+        ws.addEventListener("close", handleClose)
+        ws.addEventListener("error", handleError)
+        ws.send(JSON.stringify({
+            action: "onchat",
+            data: {
+                event: "CHAT_CHECK_USER_ONLINE",
+                data: {user}
+            }
+        }))
+    })
 }
