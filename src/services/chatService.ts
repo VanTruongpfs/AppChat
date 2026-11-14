@@ -64,12 +64,13 @@ export async function getUserList(): Promise<ChatUserItem[]> {
     });
 }
 
-export async function getChatMessages(name: string, page:number): Promise<LoadMessagesResult> {
+export async function getChatMessages(name: string, page: number, isGroup: boolean): Promise<LoadMessagesResult> {
     const ws = await connectChatSocket();
+    const event = isGroup ? "GET_ROOM_CHAT_MES" : "GET_PEOPLE_CHAT_MES";
     return new Promise((resolve, reject) => {
         const timer = window.setTimeout(() => {
             cleanup();
-            reject(new Error("Server không phản hồi CHAT_PEOPLE_GET_MES."));
+            reject(new Error(`Server không phản hồi ${event}.`));
         }, 10000);
         function cleanup() {
             window.clearTimeout(timer);
@@ -91,13 +92,13 @@ export async function getChatMessages(name: string, page:number): Promise<LoadMe
             }
             if (
                 response.status === "error" &&
-                (response.event === "CHAT_PEOPLE_GET_MES" || response.event === "GET_ROOM_CHAT_MES")
+                response.event === event
             ) {
                 cleanup();
                 reject(new Error(response.mes || "Phòng không tồn tại hoặc không có quyền truy cập."));
                 return;
             }
-            if (response.event !== "CHAT_PEOPLE_GET_MES") return;
+            if (response.event !== event) return;
             if (response.status !== "success") {
                 cleanup();
                 reject(new Error(response.mes || "Không thể tải tin nhắn."));
@@ -114,18 +115,18 @@ export async function getChatMessages(name: string, page:number): Promise<LoadMe
                 }
             } else if (
                 isRecord(data) &&
-                Array.isArray(data.chatMess) &&
-                data.chatMess.every(isServerMessage)
+                Array.isArray(data.chatData) &&
+                data.chatData.every(isServerMessage)
             ) {
-                const members = Array.isArray(data.user) && data.user.every(isRoomMember)
-                    ? data.user
+                const members = Array.isArray(data.userList) && data.userList.every(isRoomMember)
+                    ? data.userList
                     : [];
                 result = {
                     kind: "group",
                     roomName: typeof data.name === "string" ? data.name : name,
                     members,
-                    messages: data.chatMess,
-                    hasMore: data.chatMess.length === 50,
+                    messages: data.chatData,
+                    hasMore: data.chatData.length === 50,
                 }
             } else {
                 reject(new Error("Dữ liệu không hợp lệ từ server."));
@@ -147,7 +148,7 @@ export async function getChatMessages(name: string, page:number): Promise<LoadMe
         ws.send(JSON.stringify({
             action: "onchat",
             data: {
-                event: "CHAT_PEOPLE_GET_MES",
+                event,
                 data: {
                     name,
                     page
