@@ -103,7 +103,7 @@ export default function HomePage() {
         async function loadHistory() {
             if (!selectedConversation) return
             try {
-                const result = await getChatMessages(selectedConversation.name, 1)
+                const result = await getChatMessages(selectedConversation.name, 1, selectedConversation.isGroup)
                 if (isMounted) {
                     const messages: MessageData[] = result.messages
                         .map((m) => ({
@@ -158,7 +158,7 @@ export default function HomePage() {
 
         dispatch(setLoading({ conversationId, loading: true }))
         try {
-            const result = await getChatMessages(selectedConversation.name, currentPage + 1)
+            const result = await getChatMessages(selectedConversation.name, currentPage + 1, selectedConversation.isGroup)
             const messages: MessageData[] = result.messages
                 .map((m) => ({
                     id: m.id,
