@@ -156,11 +156,9 @@ export async function getChatMessages(name: string, page:number): Promise<LoadMe
         }));
     });
 }
-
 function isRecord(value: unknown): value is Record<string, unknown> {
     return typeof value === "object" && value !== null;
 }
-
 function isServerMessage(value: unknown): value is ServerMessage {
     return isRecord(value) &&
         typeof value.id === "number" &&
@@ -170,9 +168,87 @@ function isServerMessage(value: unknown): value is ServerMessage {
         typeof value.createAt === "string" &&
         (value.type === 0 || value.type === 1);
 }
-
 function isRoomMember(value: unknown): value is RoomMember {
     return isRecord(value) &&
         typeof value.id === "number" &&
         typeof value.name === "string";
+}
+type CheckUserOnlineResponse = {
+    status?: string
+    event?: string
+    data?: {
+        status?: boolean
+    }
+    mes?: string
+}
+export async function checkUserOnline(user: string): Promise<boolean> {
+    const ws = await connectChatSocket()
+    return new Promise((resolve, reject) => {
+        const timer = window.setTimeout(() => {
+            cleanup()
+            reject(new Error("Server không phản hồi CHECK_USER_ONLINE."))
+        }, 10000)
+        function cleanup() {
+            window.clearTimeout(timer)
+            ws.removeEventListener("message", handleMessage)
+            ws.removeEventListener("close", handleClose)
+            ws.removeEventListener("error", handleError)
+        }
+        function handleMessage(message: MessageEvent) {
+            let response: CheckUserOnlineResponse
+            try {
+                response = JSON.parse(message.data)
+            } catch {
+                return
+            }
+            if (response.event === "ACTION_NOT_EXIT") {
+                cleanup()
+                reject(new Error(
+                    response.mes || "Server không hỗ trợ CHAT_CHECK_USER_ONLINE."
+                ))
+                return
+            }
+            if (response.event === "AUTH") {
+                cleanup()
+                reject(new Error(
+                    response.mes || "Bạn chưa đăng nhập."
+                ))
+                return
+            }
+            if (response.event !== "CHECK_USER_ONLINE") {
+                return
+            }
+            cleanup()
+            if (
+                response.status === "success" &&
+                typeof response.data?.status === "boolean"
+            ) {
+                resolve(response.data.status)
+            } else {
+                reject(new Error(
+                    response.mes || "Không kiểm tra được trạng thái người dùng."
+                ))
+            }
+        }
+        function handleClose() {
+            cleanup()
+            reject(new Error("WebSocket đã bị đóng."))
+        }
+        function handleError() {
+            cleanup()
+            reject(new Error("Lỗi kết nối WebSocket."))
+        }
+        ws.addEventListener("message", handleMessage)
+        ws.addEventListener("close", handleClose)
+        ws.addEventListener("error", handleError)
+        ws.send(JSON.stringify({
+            action: "onchat",
+            data: {
+                event: "CHAT_CHECK_USER_ONLINE",
+                data: {
+                    user
+                }
+            }
+        }))
+    })
 }
