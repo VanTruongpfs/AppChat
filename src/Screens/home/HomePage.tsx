@@ -8,7 +8,7 @@ import React from "react"
 import ChatPanel from '../../components/chat/ChatPanel'
 import DetailPanel from '../../components/DetailPanel/DetailPanel'
 import type { MessageData } from '../../components/chat/types'
-import { getUserList, getChatMessages } from '../../services/chatService'
+import { getUserList, getChatMessages,checkUserOnline } from '../../services/chatService'
 import { useAppDispatch, useAppSelector } from '../../app/hook'
 import { setError, setMessages, setHasMore, setLoading, setPage, appendMessages, prependMessages } from '../../components/chat/ChatSlice'
 import CreateRoomModal from '../../components/popupCreateGroup/CreateRoomModal'
@@ -31,9 +31,8 @@ export default function HomePage() {
         React.useState(true)
     const [conversationsError, setConversationsError] = React.useState("")
     const [showCreateRoom, setShowCreateRoom] = React.useState(false)
-
-    // const groupCount = conversations.filter(item => item.isGroup).length
-    // const personalCount = conversations.filter(item => !item.isGroup).length
+    const [onlineStatus, setOnlineStatus] = React.useState<boolean | null>(null)
+    const [isCheckingOnline, setIsCheckingOnline] = React.useState(false)
     React.useEffect(() => {
         let isMounted = true
         async function fetchConversations() {
@@ -130,6 +129,38 @@ export default function HomePage() {
             isMounted = false
         }
     }, [selectedConversation, authUser, dispatch])
+    React.useEffect(() => {
+        if (!selectedConversation || selectedConversation.isGroup) {
+            setOnlineStatus(null)
+            setIsCheckingOnline(false)
+            return
+        }
+        let isMounted = true
+        const userName = selectedConversation.name
+        setOnlineStatus(null)
+        setIsCheckingOnline(true)
+        async function checkOnline() {
+            try {
+                const status = await checkUserOnline(userName)
+                if (isMounted) {
+                    setOnlineStatus(status)
+                }
+            } catch (error) {
+                console.error("Lỗi kiểm tra trạng thái online:", error)
+                if (isMounted) {
+                    setOnlineStatus(null)
+                }
+            } finally {
+                if (isMounted) {
+                    setIsCheckingOnline(false)
+                }
+            }
+        }
+        void checkOnline()
+        return () => {
+            isMounted = false
+        }
+    }, [selectedConversation])
     const currentMessages = selectedConversation
         ? messagesByConversation[selectedConversation.id] || []
         : []
@@ -216,6 +247,8 @@ export default function HomePage() {
                         isLoadingMore={currentLoading}
                         hasMore={currentHasMore}
                         error={currentError}
+                        isOnline={onlineStatus}
+                        isCheckingOnline={isCheckingOnline}
                     />
                 </section>
                 <section className="details-panel">
