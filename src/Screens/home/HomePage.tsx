@@ -4,7 +4,7 @@ import type { ConversationData } from '../../components/conversations/Conversati
 // @ts-ignore
 import conversationImage from '../../assets/Screenshot 2026-10-30 121448.png'
 import '../../styles/css/HomePage.scss'
-import React from "react"
+import React,{useState, useEffect, useRef} from "react"
 import ChatPanel from '../../components/chat/ChatPanel'
 import DetailPanel from '../../components/DetailPanel/DetailPanel'
 import type { MessageData } from '../../components/chat/types'
@@ -12,7 +12,7 @@ import { getUserList, getChatMessages,checkUserOnline } from '../../services/cha
 import { useAppDispatch, useAppSelector } from '../../app/hook'
 import { setError, setMessages, setHasMore, setLoading, setPage, appendMessages, prependMessages } from '../../components/chat/ChatSlice'
 import CreateRoomModal from '../../components/popupCreateGroup/CreateRoomModal'
-
+import { createRoom } from '../../services/roomService'
 export default function HomePage() {
     const dispatch = useAppDispatch()
     const authUser = useAppSelector(state => state.auth.user)
@@ -24,16 +24,17 @@ export default function HomePage() {
         errorByConversation,
     } = useAppSelector(state => state.chat)
     const [conversations, setConversations] =
-        React.useState<ConversationData[]>([])
+        useState<ConversationData[]>([])
     const [selectedConversation, setSelectedConversation] =
-        React.useState<ConversationData | null>(null)
+        useState<ConversationData | null>(null)
     const [isLoadingConversations, setIsLoadingConversations] =
-        React.useState(true)
-    const [conversationsError, setConversationsError] = React.useState("")
-    const [showCreateRoom, setShowCreateRoom] = React.useState(false)
-    const [onlineStatus, setOnlineStatus] = React.useState<boolean | null>(null)
-    const [isCheckingOnline, setIsCheckingOnline] = React.useState(false)
-    React.useEffect(() => {
+        useState(true)
+    const [conversationsError, setConversationsError] = useState("")
+    const [showCreateRoom, setShowCreateRoom] = useState(false)
+    const [onlineStatus, setOnlineStatus] = useState<boolean | null>(null)
+    const [isCheckingOnline, setIsCheckingOnline] = useState(false)
+    const creatingRoomRef = useRef(false)
+    useEffect(() => {
         let isMounted = true
         async function fetchConversations() {
             try {
@@ -91,7 +92,7 @@ export default function HomePage() {
             isMounted = false
         }
     }, [])
-    React.useEffect(() => {
+    useEffect(() => {
         if (!selectedConversation) return
         let isMounted = true
         const id = selectedConversation.id
@@ -129,7 +130,7 @@ export default function HomePage() {
             isMounted = false
         }
     }, [selectedConversation, authUser, dispatch])
-    React.useEffect(() => {
+    useEffect(() => {
         if (!selectedConversation || selectedConversation.isGroup) {
             setOnlineStatus(null)
             setIsCheckingOnline(false)
@@ -264,8 +265,18 @@ export default function HomePage() {
                             image: item.image,
                         }))}
                     onClose={() => setShowCreateRoom(false)}
-                    onConfirm={data => {
-                        console.log("Dữ liệu tạo nhóm:", data)
+                    onConfirm={async data => {
+                        if (creatingRoomRef.current) return
+                        creatingRoomRef.current = true
+                        try {
+                            const room = await createRoom(data.name)
+                            console.log("Tạo phòng thành công:", room)
+                            setShowCreateRoom(false)
+                        } catch (error) {
+                            console.error("Tạo phòng thất bại:", error)
+                        } finally {
+                            creatingRoomRef.current = false
+                        }
                     }}
                 />
             )}
