@@ -31,4 +31,12 @@ export interface LoadMessagesResult {
     messages: ServerMessage[]
     hasMore: boolean
 }
+export type IncomingChat = {
+    id?: number
+    name: string
+    to: string
+    mes: string
+    type: 0 | 1
+    createAt?: string
+}
 

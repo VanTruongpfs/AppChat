@@ -14,6 +14,7 @@ import { setError, setMessages, setHasMore, setLoading, setPage, appendMessages,
 import CreateRoomModal from '../../components/popupCreateGroup/CreateRoomModal'
 import { createRoom } from '../../services/roomService'
 import {sendChatMessage} from "../../services/sendChatService";
+import { useRealtimeChat } from '../../hooks/useRealtimeChat'
 export default function HomePage() {
     const dispatch = useAppDispatch()
     const authUser = useAppSelector(state => state.auth.user)
@@ -35,6 +36,7 @@ export default function HomePage() {
     const [onlineStatus, setOnlineStatus] = useState<boolean | null>(null)
     const [isCheckingOnline, setIsCheckingOnline] = useState(false)
     const creatingRoomRef = useRef(false)
+    useRealtimeChat(conversations,authUser);
     useEffect(() => {
         let isMounted = true
         async function fetchConversations() {
