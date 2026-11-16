@@ -13,6 +13,7 @@ import { useAppDispatch, useAppSelector } from '../../app/hook'
 import { setError, setMessages, setHasMore, setLoading, setPage, appendMessages, prependMessages } from '../../components/chat/ChatSlice'
 import CreateRoomModal from '../../components/popupCreateGroup/CreateRoomModal'
 import { createRoom } from '../../services/roomService'
+import {sendChatMessage} from "../../services/sendChatService";
 export default function HomePage() {
     const dispatch = useAppDispatch()
     const authUser = useAppSelector(state => state.auth.user)
@@ -169,17 +170,28 @@ export default function HomePage() {
     const currentLoading = selectedConversation ? loadingByConversation[selectedConversation.id] : false
     const currentHasMore = selectedConversation ? hasMoreByConversation[selectedConversation.id] : false
 
-    const handleSendMessage = (text: string) => {
-        if (!selectedConversation) return
-        const conversationId = selectedConversation.id
-        const newMessage: MessageData = {
-            id: Date.now(),
-            text,
-            time: new Date().toLocaleTimeString('vi-VN', { hour: '2-digit', minute: '2-digit' }),
-            isMine: true,
-            type: 'text',
+    const handleSendMessage = async (text: string) => {
+        const conversation = selectedConversation;
+        const content = text.trim();
+
+        if (!conversation || !content) return
+
+        const conversationId = conversation.id
+        dispatch(setError({conversationId,error:""}))
+        try {
+            await sendChatMessage(conversation.name, content, conversation.isGroup);
+            const newMessage: MessageData = {
+                id: Date.now(),
+                text,
+                time: new Date().toLocaleTimeString('vi-VN', { hour: '2-digit', minute: '2-digit' }),
+                isMine: true,
+                type: 'text',
+            }
+            dispatch(appendMessages({ conversationId, messages: [newMessage] }))
+        }catch (error) {
+            dispatch(setError({conversationId, error: error instanceof Error ? error.message : "Không gửi được tin nhắn"}))
         }
-        dispatch(appendMessages({ conversationId, messages: [newMessage] }))
+
     }
 
     const handleLoadMore = async () => {
