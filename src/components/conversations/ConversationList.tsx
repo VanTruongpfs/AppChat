@@ -4,14 +4,10 @@ import Conversation, {
 } from './Conversation'
 type ConversationListProps = {
     conversations: ConversationData[]
-    selectedId: number | null
+    selectedId: string | null
     onSelect: (conversation: ConversationData) => void
 }
-export default function ConversationList({
-                                             conversations,
-                                             selectedId,
-                                             onSelect
-                                         }: ConversationListProps) {
+export default function ConversationList({conversations, selectedId, onSelect}: ConversationListProps) {
     return (
         <div className="conversation-list">
             {conversations.map((conversation) => (
