@@ -2,6 +2,7 @@ const WS_URL = "wss://chat.longapp.io.vn/chat/chat";
 let socket: WebSocket | null = null;
 const STORAGE_KEY = "chat_session_auth";
 const TWO_HOURS_MS = 2 * 60 * 60 * 1000;
+const MAX_RETRY_DELAY = 30000;
 let retryCount = 0;
 let retryTimer: number | null = null;
 let isManualClose = false;
@@ -35,6 +36,7 @@ export function clearChatSession() {
     localStorage.removeItem(STORAGE_KEY);
 }
 export function connectChatSocket(): Promise<WebSocket> {
+    isManualClose = false;
     if(socket?.readyState === WebSocket.OPEN) {
         return Promise.resolve(socket);
     }
@@ -47,7 +49,7 @@ export function connectChatSocket(): Promise<WebSocket> {
     connection.addEventListener("message", (e) => {
         try {
             const res = JSON.parse(e.data);
-            if (res.type === "RE_LOGIN") {
+            if (res.event === "RE_LOGIN") {
                 handleReLoginResponse(res);
             }
         } catch (error) {
@@ -57,6 +59,9 @@ export function connectChatSocket(): Promise<WebSocket> {
     connection.addEventListener("close", () => {
         if(socket === connection){
             socket = null;
+        }
+        if (!isManualClose) {      
+            scheduleReconnect();   
         }
     })
     connecting = new Promise<WebSocket>((resolve, reject) => {
@@ -80,6 +85,11 @@ export function connectChatSocket(): Promise<WebSocket> {
     }
     function handleOpen() {
         cleanup()
+        retryCount = 0;                      
+        if (retryTimer) {                     
+            window.clearTimeout(retryTimer);   
+            retryTimer = null;                 
+        }
         const session = getChatSession();
             if (session && session.user && session.code) {
                 if (
@@ -91,6 +101,7 @@ export function connectChatSocket(): Promise<WebSocket> {
                     sendReLoginRequest(connection, session.user, session.code);
                 }
             }
+            resolve(connection);
     }
     function handleError() {
         fail("Không kết nối được")
@@ -126,6 +137,15 @@ function handleReLoginResponse(res: any) {
         const currentSession = getChatSession();
         if (currentSession) {
             saveChatSession(currentSession.user, res.data.RE_LOGIN_CODE);
+
+            window.dispatchEvent(
+                new CustomEvent("chat:relogin-success", {
+                    detail: {
+                        user: currentSession.user,
+                        reLoginCode: res.data.RE_LOGIN_CODE,
+                    },
+                })
+            );
         }
         console.log("Re-login successful, session updated.");
     } else if (res.status === "error") {
@@ -151,3 +171,37 @@ function handleSessionExpired(reason: string) {
         new CustomEvent("chat:session-expired", { detail: { message: reason } })
     );
 }
+function scheduleReconnect() {
+    if (retryTimer) return;
+
+    const session = getChatSession();
+    if (!session) return;
+
+    if (!session.firstDisconnectAt) {
+        session.firstDisconnectAt = Date.now();
+        localStorage.setItem(STORAGE_KEY, JSON.stringify(session));
+    }
+
+    if (Date.now() - session.firstDisconnectAt > TWO_HOURS_MS) {
+        handleSessionExpired("Quá 2 tiếng mất kết nối.");
+        return;
+    }
+
+    const delay = Math.min(1000 * Math.pow(2, retryCount), MAX_RETRY_DELAY);
+    retryCount++;
+
+    retryTimer = window.setTimeout(() => {
+        retryTimer = null;
+        connectChatSocket().catch(() => {});
+    }, delay);
+}
+window.addEventListener("online", () => {
+    const session = getChatSession();
+    if (session && !isManualClose) {
+        if (retryTimer) {
+            window.clearTimeout(retryTimer);
+            retryTimer = null;
+        }
+        connectChatSocket().catch(() => {});
+    }
+});

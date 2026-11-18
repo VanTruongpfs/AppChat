@@ -1,5 +1,5 @@
 import AuthField from "./AuthField.tsx";
-import { connectChatSocket } from "../../services/connectSocket";
+import { connectChatSocket, saveChatSession } from "../../services/connectSocket";
 import { useAppDispatch, useAppSelector } from "../../app/hook";
 import type { AppDispatch } from "../../app/store";
 import {logginStart, logginSuccess, logginFail, registerSuccess, clearAuthError} from "./authSlice";
@@ -57,6 +57,7 @@ function handleAuthResponse(event: MessageEvent, user: string, dispatch: AppDisp
                 console.error("Phản hồi đăng nhập thiếu mã phiên");
                 return;
             }
+            saveChatSession(user, reLoginCode);
             console.log("Đã nhận mã phiên");
             dispatch(logginSuccess({
                 user: user,
@@ -117,9 +118,16 @@ async function handleSubmit(event: FormEvent<HTMLFormElement>, isRegister: boole
     dispatch(logginStart());
     try{
         const connection = await connectChatSocket();
-        connection.onmessage=(messageEvent)  => {
+        const onMessage = (messageEvent: MessageEvent) => {
             handleAuthResponse(messageEvent, user, dispatch);
+            try {
+                const parsed = JSON.parse(messageEvent.data);
+                if (parsed?.event === "LOGIN" || parsed?.event === "REGISTER") {
+                    connection.removeEventListener("message", onMessage);
+                }
+            } catch {}
         };
+        connection.addEventListener("message", onMessage);
         console.log("WebSocket đã kết nối", connection.readyState===WebSocket.OPEN);
         const request = {
             action: "onchat",
