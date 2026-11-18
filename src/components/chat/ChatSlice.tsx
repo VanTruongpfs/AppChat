@@ -2,12 +2,12 @@ import { createSlice, type PayloadAction } from '@reduxjs/toolkit';
 import type { MessageData, RoomMember } from './types.ts';
 
 interface ChatState {
-    messagesByConversation: Record<number, MessageData[]>;
-    pageByConversation: Record<number, number>;
-    hasMoreByConversation: Record<number, boolean>;
-    loadingByConversation: Record<number, boolean>;
-    errorByConversation: Record<number, string>;
-    membersByConversation: Record<number, RoomMember[]>;
+    messagesByConversation: Record<string, MessageData[]>;
+    pageByConversation: Record<string, number>;
+    hasMoreByConversation: Record<string, boolean>;
+    loadingByConversation: Record<string, boolean>;
+    errorByConversation: Record<string, string>;
+    membersByConversation: Record<string, RoomMember[]>;
 }
 
 const initialState: ChatState = {
@@ -23,34 +23,34 @@ export const chatSlice = createSlice({
     name: 'chat',
     initialState,
     reducers: {
-        setMessages(state, action: PayloadAction<{ conversationId: number; messages: MessageData[] }>) {
+        setMessages(state, action: PayloadAction<{ conversationId: string; messages: MessageData[] }>) {
             const { conversationId, messages } = action.payload;
             state.messagesByConversation[conversationId] = messages;
             state.errorByConversation[conversationId] = '';
         },
-        prependMessages(state, action: PayloadAction<{ conversationId: number; messages: MessageData[] }>) {
+        prependMessages(state, action: PayloadAction<{ conversationId: string; messages: MessageData[] }>) {
             const { conversationId, messages } = action.payload;
             state.messagesByConversation[conversationId] = [
                 ...messages,
                 ...(state.messagesByConversation[conversationId] ?? []),
             ];
         },
-        setPage(state, action: PayloadAction<{ conversationId: number; page: number }>) {
+        setPage(state, action: PayloadAction<{ conversationId: string; page: number }>) {
             state.pageByConversation[action.payload.conversationId] = action.payload.page;
         },
-        setHasMore(state, action: PayloadAction<{ conversationId: number; hasMore: boolean }>) {
+        setHasMore(state, action: PayloadAction<{ conversationId: string; hasMore: boolean }>) {
             state.hasMoreByConversation[action.payload.conversationId] = action.payload.hasMore;
         },
-        setLoading(state, action: PayloadAction<{ conversationId: number; loading: boolean }>) {
+        setLoading(state, action: PayloadAction<{ conversationId: string; loading: boolean }>) {
             state.loadingByConversation[action.payload.conversationId] = action.payload.loading;
         },
-        setError(state, action: PayloadAction<{ conversationId: number; error: string }>) {
+        setError(state, action: PayloadAction<{ conversationId: string; error: string }>) {
             state.errorByConversation[action.payload.conversationId] = action.payload.error;
         },
-        setMembers(state, action: PayloadAction<{ conversationId: number; members: RoomMember[] }>) {
+        setMembers(state, action: PayloadAction<{ conversationId: string; members: RoomMember[] }>) {
             state.membersByConversation[action.payload.conversationId] = action.payload.members;
         },
-        clearConversation(state, action: PayloadAction<number>) {
+        clearConversation(state, action: PayloadAction<string>) {
             const id = action.payload;
             delete state.messagesByConversation[id];
             delete state.pageByConversation[id];
@@ -67,7 +67,7 @@ export const chatSlice = createSlice({
             state.errorByConversation = {};
             state.membersByConversation = {};
         },
-        appendMessages(state, action: PayloadAction<{ conversationId: number; messages: MessageData[] }>) {
+        appendMessages(state, action: PayloadAction<{ conversationId: string; messages: MessageData[] }>) {
             const { conversationId, messages } = action.payload;
             state.messagesByConversation[conversationId] = [
                 ...(state.messagesByConversation[conversationId] ?? []),
