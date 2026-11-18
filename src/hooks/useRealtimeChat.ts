@@ -42,7 +42,7 @@ export function useRealtimeChat(conversation: ConversationData[], authUser: stri
                 c=>c.name === partner && c.isGroup === isGroup
             )
             if(!conversation) return;
-            const timeFormat = {hour: '2-digit', minutes: '2-digit'} as const;
+            const timeFormat = {hour: '2-digit', minute: '2-digit'} as const;
             const message:MessageData = {
                 id: chat.id ?? Date.now(),
                 text: chat.mes,
