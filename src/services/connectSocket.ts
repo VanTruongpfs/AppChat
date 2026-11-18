@@ -1,6 +1,35 @@
 const WS_URL = "wss://chat.longapp.io.vn/chat/chat";
 let socket: WebSocket | null = null;
+const STORAGE_KEY = "chat_session_auth";
+interface StoredSession {
+    user: string;
+    code: string;
+    firstDisconnectAt: number | null; 
+}
 let connecting: Promise<WebSocket> | null= null;
+
+export function saveChatSession(user: string, code: string) {
+    const session: StoredSession = {
+        user,
+        code,
+        firstDisconnectAt: null
+    };
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(session));
+}
+
+function getChatSession(): StoredSession | null {
+    const raw = localStorage.getItem(STORAGE_KEY);
+    if (!raw) return null;
+    try {
+        return JSON.parse(raw) as StoredSession;
+    } catch {
+        return null;
+    }
+}
+
+export function clearChatSession() {
+    localStorage.removeItem(STORAGE_KEY);
+}
 export function connectChatSocket(): Promise<WebSocket> {
     if(socket?.readyState === WebSocket.OPEN) {
         return Promise.resolve(socket);
