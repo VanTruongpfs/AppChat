@@ -1,5 +1,5 @@
 import { createSlice, type PayloadAction } from '@reduxjs/toolkit'
-import type { ConversationData } from './Conversation'
+import { type ConversationData } from './Conversation'
 interface conversationState {
     conversations: ConversationData[]
     selectedConversationId: string | null
@@ -40,10 +40,31 @@ export const conversationSlice = createSlice({
         setConversationError: (state, action: PayloadAction<string>) => {
             state.error = action.payload
         },
+        openConversation: (state, action: PayloadAction<ConversationData>) => {
+            const conversation = action.payload
+            const existing = state.conversations.find(
+                item => item.id === conversation.id
+            )
+            if (!existing) {
+                state.conversations.unshift(conversation)
+            }else{
+                existing.unreadCount = 0
+            }
+            state.selectedConversationId = conversation.id
+        },
+        addConversationIfMissing: (state, action: PayloadAction<ConversationData>) => {
+            const conversation = action.payload
+            const exist = state.conversations.some(
+                item => item.id === conversation.id
+            )
+            if (!exist) {
+                state.conversations.unshift(conversation)
+            }
+        },
         clearConversations: () => {
             return initialState;
         },
     },
 })
-export const {setConversations, selectConversation, setConversationLoading, setConversationError,clearConversations} = conversationSlice.actions
+export const {setConversations, selectConversation, setConversationLoading, openConversation,setConversationError, addConversationIfMissing,clearConversations} = conversationSlice.actions
 export default conversationSlice.reducer

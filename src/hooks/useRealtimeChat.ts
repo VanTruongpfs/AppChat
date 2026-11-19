@@ -4,6 +4,9 @@ import { useAppDispatch } from '../app/hook'
 import { appendMessages } from '../components/chat/ChatSlice'
 import { type ConversationData } from '../components/conversations/Conversation'
 import type { IncomingChat, MessageData } from '../components/chat/types'
+import { addConversationIfMissing } from '../components/conversations/conversationSlice'
+import { getConversationId } from '../utils/conversationId'
+import avatar from '../assets/Screenshot 2026-10-30 121448.png'
 export function useRealtimeChat(conversation: ConversationData[], authUser: string|null) {
     const dispatch = useAppDispatch();
     const conversationRef = useRef(conversation);
@@ -41,7 +44,7 @@ export function useRealtimeChat(conversation: ConversationData[], authUser: stri
             const conversation = conversationRef.current.find(
                 c=>c.name === partner && c.isGroup === isGroup
             )
-            if(!conversation) return;
+            if(!conversation && isGroup) return;
             const timeFormat = {hour: '2-digit', minute: '2-digit'} as const;
             const message:MessageData = {
                 id: chat.id ?? Date.now(),
@@ -51,6 +54,19 @@ export function useRealtimeChat(conversation: ConversationData[], authUser: stri
                         : new Date().toLocaleTimeString('vi-VN',timeFormat),
                 isMine: false,
                 type: 'text',
+            }
+            const conversationId = conversation?.id ?? getConversationId(partner, false);
+            if(!conversation){
+                dispatch(addConversationIfMissing({
+                    id: conversationId,
+                    name: partner,
+                    image: avatar,
+                    lastMessage: message.text,
+                    time: message.time,
+                    unreadCount: 1,
+                    isPriority: false,
+                    isGroup: false,
+                }));
             }
             dispatch(appendMessages({conversationId: conversation.id, messages:[message]}))
         }

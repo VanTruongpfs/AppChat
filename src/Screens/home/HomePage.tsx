@@ -1,4 +1,3 @@
-import React from "react"
 import { useAppDispatch, useAppSelector } from '../../app/hook'
 import ChatPanel from '../../components/chat/ChatPanel'
 import ConversationSidebar from '../../components/conversations/ConversationSidebar'
