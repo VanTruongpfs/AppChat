@@ -245,7 +245,7 @@ export async function checkUserOnline(user: string): Promise<boolean> {
         ws.send(JSON.stringify({
             action: "onchat",
             data: {
-                event: "CHAT_CHECK_USER_ONLINE",
+                event: "CHECK_USER_ONLINE",
                 data: {
                     user
                 }
