@@ -7,6 +7,7 @@ import type { IncomingChat, MessageData } from '../components/chat/types'
 import { addConversationIfMissing } from '../components/conversations/conversationSlice'
 import { getConversationId } from '../utils/conversationId'
 import avatar from '../assets/Screenshot 2026-10-30 121448.png'
+import {decodeEmoji} from "../utils/emojiCode.ts";
 export function useRealtimeChat(conversation: ConversationData[], authUser: string|null) {
     const dispatch = useAppDispatch();
     const conversationRef = useRef(conversation);
@@ -48,7 +49,7 @@ export function useRealtimeChat(conversation: ConversationData[], authUser: stri
             const timeFormat = {hour: '2-digit', minute: '2-digit'} as const;
             const message:MessageData = {
                 id: chat.id ?? Date.now(),
-                text: chat.mes,
+                text: decodeEmoji(chat.mes),
                 time: chat.createAt ? new Date(chat.createAt.replace(' ','T'))
                         .toLocaleTimeString('vi-VN',timeFormat)
                         : new Date().toLocaleTimeString('vi-VN',timeFormat),

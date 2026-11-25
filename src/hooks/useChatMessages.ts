@@ -5,6 +5,7 @@ import type { MessageData } from '../components/chat/types'
 import { setError, setMessages, setHasMore, setLoading, setPage, appendMessages, prependMessages } from '../components/chat/ChatSlice'
 import { getChatMessages } from '../services/chatService'
 import { sendChatMessage } from '../services/sendChatService'
+import {decodeEmoji} from '../utils/emojiCode'
 
 export function useChatMessages(
     selectedConversation: ConversationData | null,
@@ -34,7 +35,7 @@ export function useChatMessages(
                     const messages: MessageData[] = result.messages
                         .map((m) => ({
                             id: m.id,
-                            text: m.mes,
+                            text: decodeEmoji(m.mes),
                             time: m.createAt ? new Date(m.createAt.replace(" ", "T")).toLocaleTimeString("vi-VN", { hour: "2-digit", minute: "2-digit" }) : "",
                             isMine: m.name === authUser,
                             type: "text" as const,
@@ -99,7 +100,7 @@ export function useChatMessages(
             const messages: MessageData[] = result.messages
                 .map((m) => ({
                     id: m.id,
-                    text: m.mes,
+                    text: decodeEmoji(m.mes),
                     time: m.createAt ? new Date(m.createAt.replace(" ", "T")).toLocaleTimeString("vi-VN", { hour: "2-digit", minute: "2-digit" }) : "",
                     isMine: m.name === authUser,
                     type: "text" as const,
