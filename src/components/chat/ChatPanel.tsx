@@ -12,7 +12,7 @@ type ChatPanelProps = {
     hasMore?: boolean
     error?: string
     isOnline: boolean | null
-    isCheckingOnline: boolean | null
+    isCheckingOnline: boolean
 }
 export default function ChatPanel({
                                       conversation,
