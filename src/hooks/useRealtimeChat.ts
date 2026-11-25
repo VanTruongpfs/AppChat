@@ -69,7 +69,7 @@ export function useRealtimeChat(conversation: ConversationData[], authUser: stri
                     isGroup: false,
                 }));
             }
-            dispatch(appendMessages({conversationId: conversation.id, messages:[message]}))
+            dispatch(appendMessages({conversationId, messages:[message]}))
         }
         connectChatSocket()
             .then(ws=>{
