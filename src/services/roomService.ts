@@ -1,15 +1,15 @@
 import { connectChatSocket } from "./connectSocket";
-export type CreatedRoom = {
+export type RoomInfo = {
     name: string;
 }
-
-export type CreateRoomResponse = {
-    event: "CREATE_ROOM";
+type RoomEvent = "CREATE_ROOM" | "JOIN_ROOM";
+export type RoomResponse = {
+    event: RoomEvent;
     status: "success" | "error";
-    data?: CreatedRoom;
+    data?: RoomInfo;
     mes?: string;
 }
-export async function createRoom(name: string): Promise<CreatedRoom> {
+export async function sendRoomRequest(event: RoomEvent, name: string, failMessage: string): Promise<RoomInfo> {
     const roomName = name.trim()
 
     if (!roomName) {
@@ -18,10 +18,10 @@ export async function createRoom(name: string): Promise<CreatedRoom> {
 
     const ws = await connectChatSocket()
 
-    return new Promise<CreatedRoom>((resolve, reject) => {
+    return new Promise<RoomInfo>((resolve, reject) => {
         const timer = window.setTimeout(() => {
             cleanup()
-            reject(new Error("Server không phản hồi CREATE_ROOM."))
+            reject(new Error(`Server không phản hồi ${event}`))
         }, 10000)
         function cleanup() {
             window.clearTimeout(timer)
@@ -31,13 +31,13 @@ export async function createRoom(name: string): Promise<CreatedRoom> {
         }
         function handleMessage(message: MessageEvent) {
             if (typeof message.data !== "string") return
-            let response: CreateRoomResponse
+            let response: RoomResponse
             try {
                 response = JSON.parse(message.data)
             } catch {
                 return
             }
-            if (response?.event !== "CREATE_ROOM") return
+            if (response?.event !== event) return
             cleanup()
             if (
                 response.status === "success" &&
@@ -45,7 +45,7 @@ export async function createRoom(name: string): Promise<CreatedRoom> {
             ) {
                 resolve(response.data)
             } else {
-                reject(new Error(response.mes || "Không tạo được phòng."))
+                reject(new Error(response.mes || failMessage))
             }
         }
 
@@ -62,7 +62,7 @@ export async function createRoom(name: string): Promise<CreatedRoom> {
             const request = {
                 action: "onchat",
                 data: {
-                    event: "CREATE_ROOM",
+                    event,
                     data: {
                         name: roomName,
                     },
@@ -74,4 +74,11 @@ export async function createRoom(name: string): Promise<CreatedRoom> {
             reject(error)
         }
     })
+}
+export function createRoom(name: string): Promise<RoomInfo> {
+    return sendRoomRequest("CREATE_ROOM", name, "Không tạo được phòng.")
+}
+
+export function joinRoom(name: string): Promise<RoomInfo> {
+    return sendRoomRequest("JOIN_ROOM", name, "Không vào được phòng.")
 }
