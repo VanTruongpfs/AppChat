@@ -9,6 +9,7 @@ import { useCreateRoom } from '../../hooks/useCreateRoom'
 import { useLoadConversations } from '../../hooks/useLoadConversations'
 import { useRealtimeChat } from '../../hooks/useRealtimeChat'
 import { useUserOnlineStatus } from '../../hooks/useUserOnlineStatus'
+import { useLeaveRoom } from '../../hooks/useLeaveRoom'
 import '../../styles/css/HomePage.scss'
 
 export default function HomePage() {
@@ -35,6 +36,7 @@ export default function HomePage() {
         handleLoadMore,
     } = useChatMessages(selectedConversation, authUser)
     const { onlineStatus, isCheckingOnline } = useUserOnlineStatus(selectedConversation)
+    const {handleLeaveRoom, isLeavingRoom, leaveRoomError} = useLeaveRoom(selectedConversation)
 
     return (
         <>
@@ -63,7 +65,12 @@ export default function HomePage() {
                     />
                 </section>
                 <section className="details-panel">
-                    <DetailPanel conversation={selectedConversation} />
+                    <DetailPanel
+                        conversation={selectedConversation}
+                        onLeaveRoom={handleLeaveRoom}
+                        isLeavingRoom={isLeavingRoom}
+                        leaveRoomError={leaveRoomError}
+                    />
                 </section>
             </div>
             {showCreateRoom && (

@@ -2,9 +2,15 @@ import type { ConversationData } from '../conversations/Conversation'
 
 type DetailPanelProps = {
     conversation: ConversationData | null
+    onLeaveRoom: () => void
+    isLeavingRoom: boolean
+    leaveRoomError: string
 }
 
-const DetailPanel = ({ conversation }: DetailPanelProps) => {
+const DetailPanel = ({ conversation ,
+                         onLeaveRoom,
+                         isLeavingRoom,
+                         leaveRoomError,}: DetailPanelProps) => {
     if (!conversation) {
         return (
             <div className="details-panel">
@@ -87,8 +93,22 @@ const DetailPanel = ({ conversation }: DetailPanelProps) => {
                 </div>
                 <button type="button" className="details-view-all">Xem tất cả</button>
             </div>
+            {conversation.isGroup && (
+                <div className="details-section">
+                    <button type="button" className="details-leave-room" onClick={onLeaveRoom} disabled={isLeavingRoom}>
+                        <i className="bi bi-box-arrow-right"></i>
+                        {isLeavingRoom
+                            ? "Đang rời nhóm..."
+                            : "Rời nhóm"}
+                    </button>
+                    {leaveRoomError && (
+                        <p className="details-room-error">
+                            {leaveRoomError}
+                        </p>
+                    )}
+                </div>
+            )}
         </div>
     )
 }
-
 export default DetailPanel
