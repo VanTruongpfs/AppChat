@@ -61,10 +61,26 @@ export const conversationSlice = createSlice({
                 state.conversations.unshift(conversation)
             }
         },
+        removeConversation: (state, action: PayloadAction<string>) => {
+            const id = action.payload
+            const removedIndex = state.conversations.findIndex(
+                conversation => conversation.id === id
+            )
+            if (removedIndex === -1) return
+            state.conversations.splice(removedIndex, 1)
+            if (state.selectedConversationId === id) {
+                const nextIndex = Math.min(
+                    removedIndex,
+                    state.conversations.length - 1
+                )
+                state.selectedConversationId =
+                    state.conversations[nextIndex]?.id ?? null
+            }
+        },
         clearConversations: () => {
             return initialState;
         },
     },
 })
-export const {setConversations, selectConversation, setConversationLoading, openConversation,setConversationError, addConversationIfMissing,clearConversations} = conversationSlice.actions
+export const {setConversations, selectConversation, setConversationLoading, openConversation,setConversationError, addConversationIfMissing,clearConversations,removeConversation} = conversationSlice.actions
 export default conversationSlice.reducer
