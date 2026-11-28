@@ -133,6 +133,7 @@
     }
   }
 
+  .conversation-croll,
   .conversation-scroll {
     flex: 1;
     min-width: 0;
@@ -142,6 +143,79 @@
     overscroll-behavior-y: contain;
     scrollbar-width: thin;
     scrollbar-color: var(--color-sky-200) transparent;
+  }
+
+  .sidebar-user-footer {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 8px;
+    flex-shrink: 0;
+    margin-top: auto;
+    padding: 10px 12px;
+    border-top: 1px solid var(--color-border);
+    background: var(--color-surface);
+  }
+
+  .sidebar-user-info {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    min-width: 0;
+    flex: 1;
+  }
+
+  .sidebar-user-avatar {
+    display: grid;
+    place-items: center;
+    flex-shrink: 0;
+    width: 32px;
+    height: 32px;
+    border-radius: 50%;
+    background: var(--color-sky-100);
+    color: var(--color-primary);
+    font-size: 15px;
+  }
+
+  .sidebar-user-name {
+    overflow: hidden;
+    color: var(--color-text);
+    font-size: 13px;
+    font-weight: 600;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  .sidebar-logout-btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+    flex-shrink: 0;
+    padding: 7px 10px;
+    border: 1px solid var(--color-danger);
+    border-radius: 8px;
+    background: transparent;
+    color: var(--color-danger);
+    font-size: 12px;
+    font-weight: 500;
+    cursor: pointer;
+    white-space: nowrap;
+    transition: background-color 0.2s, color 0.2s;
+
+    i {
+      font-size: 14px;
+    }
+
+    &:hover:not(:disabled) {
+      background: var(--color-danger-background);
+      color: var(--color-danger-hover);
+    }
+
+    &:disabled {
+      opacity: 0.6;
+      cursor: not-allowed;
+    }
   }
 
   .conversation-list {
@@ -847,6 +921,22 @@
 @media (max-width: 600px) {
   .home-page {
     --conversation-sidebar-width: 90px;
+  }
+  .home-page .sidebar-user-footer {
+    justify-content: center;
+    padding: 10px 8px;
+  }
+  .home-page .sidebar-user-info {
+    display: none;
+  }
+  .home-page .sidebar-logout-btn {
+    width: 40px;
+    height: 36px;
+    padding: 0;
+
+    span {
+      display: none;
+    }
   }
   .home-page .chat-header {
     padding: 10px;

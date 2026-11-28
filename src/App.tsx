@@ -3,7 +3,9 @@ import './App.css';
 import AppRoutes from './Route/Route';
 import { connectChatSocket } from './services/connectSocket';
 import { useAppDispatch } from './app/hook';
-import { logginSuccess, logginFail } from './components/auth/authSlice'; // Sửa lại đường dẫn import authSlice đúng với thư mục của bạn
+import { logginSuccess, logoutSuccess } from './components/auth/authSlice';
+import { clearAllChat } from './components/chat/ChatSlice';
+import { clearConversations } from './components/conversations/conversationSlice';
 
 export default function App() {
     const dispatch = useAppDispatch();
@@ -16,9 +18,10 @@ export default function App() {
             dispatch(logginSuccess({ user, reLoginCode }));
         };
 
-        const onSessionExpired = (e: Event) => {
-            const msg = (e as CustomEvent).detail.message;
-            dispatch(logginFail(msg));
+        const onSessionExpired = () => {
+            dispatch(clearAllChat());
+            dispatch(clearConversations());
+            dispatch(logoutSuccess());
         };
 
         window.addEventListener("chat:relogin-success", onReloginSuccess);

@@ -51,7 +51,10 @@ export const authSlice = createSlice({
             if(state.status == "error"){
                 state.status = "idle";
             }
-        }
+        },
+        logoutSuccess(){
+            return initialState;
+        },
     },
 })
-export const {logginStart, logginSuccess, logginFail, sessionLost, registerSuccess, clearAuthError} = authSlice.actions;
+export const {logginStart, logginSuccess, logginFail, sessionLost, registerSuccess, clearAuthError, logoutSuccess} = authSlice.actions;

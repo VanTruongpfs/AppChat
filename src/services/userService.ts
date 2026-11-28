@@ -1,4 +1,9 @@
-import { connectChatSocket } from './connectSocket'
+import {
+    clearChatSession,
+    connectChatSocket,
+    disconnectChatSocket,
+    getOpenChatSocket,
+} from './connectSocket'
 
 type CheckUserExistResponse = {
     event: string
@@ -74,6 +79,74 @@ export async function checkUserExist(user: string): Promise<boolean> {
             ws.send(JSON.stringify(request))
         } catch (error) {
             fail(error)
+        }
+    })
+}
+
+type LogoutResponse = {
+    event?: string
+    status?: string
+    data?: string
+    mes?: string
+}
+
+export async function logoutAccount(): Promise<void> {
+    clearChatSession()
+    const ws = getOpenChatSocket()
+    if (!ws) {
+        disconnectChatSocket()
+        return
+    }
+
+    await new Promise<void>((resolve) => {
+        let settled = false
+        const timer = window.setTimeout(() => {
+            console.warn("Server không phản hồi LOGOUT kịp thời, tiến hành đăng xuất cục bộ.")
+            finish()
+        }, 5000)
+
+        function finish() {
+            if (settled) return
+            settled = true
+            window.clearTimeout(timer)
+            ws?.removeEventListener("message", onMessage)
+            ws?.removeEventListener("close", finish)
+            ws?.removeEventListener("error", finish)
+            disconnectChatSocket()
+            resolve()
+        }
+
+        function onMessage(message: MessageEvent) {
+            if (typeof message.data !== "string") return
+
+            let response: LogoutResponse
+            try {
+                response = JSON.parse(message.data)
+            } catch {
+                return
+            }
+
+            if (response?.event !== "LOGOUT") return
+            if (response.status === "error") {
+                console.warn("Server trả lỗi LOGOUT:", response.mes)
+            }
+            finish()
+        }
+
+        ws.addEventListener("message", onMessage)
+        ws.addEventListener("close", finish)
+        ws.addEventListener("error", finish)
+
+        try {
+            ws.send(JSON.stringify({
+                action: "onchat",
+                data: {
+                    event: "LOGOUT",
+                },
+            }))
+        } catch (error) {
+            console.warn("Không thể gửi yêu cầu LOGOUT:", error)
+            finish()
         }
     })
 }

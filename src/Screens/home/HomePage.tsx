@@ -10,6 +10,7 @@ import { useLoadConversations } from '../../hooks/useLoadConversations'
 import { useRealtimeChat } from '../../hooks/useRealtimeChat'
 import { useUserOnlineStatus } from '../../hooks/useUserOnlineStatus'
 import { useLeaveRoom } from '../../hooks/useLeaveRoom'
+import { useLogout } from '../../hooks/useLogout'
 import '../../styles/css/HomePage.scss'
 
 export default function HomePage() {
@@ -37,6 +38,7 @@ export default function HomePage() {
     } = useChatMessages(selectedConversation, authUser)
     const { onlineStatus, isCheckingOnline } = useUserOnlineStatus(selectedConversation)
     const {handleLeaveRoom, isLeavingRoom, leaveRoomError} = useLeaveRoom(selectedConversation)
+    const { handleLogout, isLoggingOut } = useLogout()
 
     return (
         <>
@@ -46,10 +48,13 @@ export default function HomePage() {
                     selectedConversationId={selectedConversationId}
                     isLoadingConversations={isLoadingConversations}
                     conversationsError={conversationsError}
+                    currentUser={authUser}
+                    isLoggingOut={isLoggingOut}
                     onSelect={conversation => {
                         dispatch(selectConversation(conversation.id))
                     }}
                     onCreateRoom={() => setShowCreateRoom(true)}
+                    onLogout={handleLogout}
                 />
                 <section className="chat-panel">
                     <ChatPanel
