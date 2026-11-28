@@ -36,6 +36,11 @@ export function clearChatSession() {
     localStorage.removeItem(STORAGE_KEY);
 }
 
+export function hasChatSession(): boolean {
+    const session = getChatSession();
+    return Boolean(session?.user && session?.code);
+}
+
 export function getOpenChatSocket(): WebSocket | null {
     return socket?.readyState === WebSocket.OPEN ? socket : null;
 }
