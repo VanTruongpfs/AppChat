@@ -7,8 +7,11 @@ type ConversationSidebarProps = {
     selectedConversationId: string | null
     isLoadingConversations: boolean
     conversationsError: string
+    currentUser: string | null
+    isLoggingOut: boolean
     onSelect: (conversation: ConversationData) => void
     onCreateRoom: () => void
+    onLogout: () => void
 }
 
 export default function ConversationSidebar({
@@ -16,8 +19,11 @@ export default function ConversationSidebar({
     selectedConversationId,
     isLoadingConversations,
     conversationsError,
+    currentUser,
+    isLoggingOut,
     onSelect,
     onCreateRoom,
+    onLogout,
 }: ConversationSidebarProps) {
     return (
         <section className="conversation-sidebar">
@@ -44,6 +50,27 @@ export default function ConversationSidebar({
                     />
                 )}
             </div>
+            <footer className="sidebar-user-footer">
+                <div className="sidebar-user-info" title={currentUser ?? ''}>
+                    <span className="sidebar-user-avatar" aria-hidden="true">
+                        <i className="bi bi-person-fill" />
+                    </span>
+                    <span className="sidebar-user-name">
+                        {currentUser ?? 'Người dùng'}
+                    </span>
+                </div>
+                <button
+                    type="button"
+                    className="sidebar-logout-btn"
+                    onClick={onLogout}
+                    disabled={isLoggingOut}
+                    aria-label="Đăng xuất"
+                    title="Đăng xuất"
+                >
+                    <i className="bi bi-box-arrow-right" aria-hidden="true" />
+                    <span>{isLoggingOut ? 'Đang thoát...' : 'Đăng xuất'}</span>
+                </button>
+            </footer>
         </section>
     )
 }
