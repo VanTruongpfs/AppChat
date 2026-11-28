@@ -35,6 +35,32 @@ function getChatSession(): StoredSession | null {
 export function clearChatSession() {
     localStorage.removeItem(STORAGE_KEY);
 }
+
+export function getOpenChatSocket(): WebSocket | null {
+    return socket?.readyState === WebSocket.OPEN ? socket : null;
+}
+
+export function disconnectChatSocket() {
+    isManualClose = true;
+    clearChatSession();
+
+    if (retryTimer) {
+        window.clearTimeout(retryTimer);
+        retryTimer = null;
+    }
+    retryCount = 0;
+
+    if (socket) {
+        const currentSocket = socket;
+        socket = null;
+        if (
+            currentSocket.readyState === WebSocket.OPEN ||
+            currentSocket.readyState === WebSocket.CONNECTING
+        ) {
+            currentSocket.close();
+        }
+    }
+}
 export function connectChatSocket(): Promise<WebSocket> {
     isManualClose = false;
     if(socket?.readyState === WebSocket.OPEN) {
